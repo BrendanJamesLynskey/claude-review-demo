@@ -162,6 +162,80 @@ Upload a screenshot of a bug to a PR comment or issue:
 
 Claude will analyse the screenshot and implement a fix.
 
+## Walkthrough — Fixing a Bug via a GitHub Issue
+
+This section walks through the full process of having Claude fix a bug by labelling a GitHub issue.
+
+### 1. The Bug
+
+The `paginate()` function in `utils.py` has an off-by-one error. The docstring says `page` is 1-indexed, but the implementation treats it as 0-indexed:
+
+```python
+def paginate(items, page, page_size):
+    """Return a single page of results. Page is 1-indexed."""
+    start = page * page_size        # Bug: should be (page - 1) * page_size
+    end = start + page_size
+    return items[start:end]
+```
+
+Calling `paginate(items, 1, 10)` skips the first 10 items instead of returning them.
+
+### 2. Create a GitHub Issue
+
+Create an issue describing the bug with clear reproduction steps:
+
+```bash
+gh issue create \
+  --title "Bug: paginate() returns wrong results for page 1" \
+  --body "The paginate() function in utils.py is 0-indexed despite the docstring
+saying page 1 is the first page. paginate(items, 1, 10) skips the first 10 items."
+```
+
+### 3. Create the `claude` Label (First Time Only)
+
+```bash
+gh label create claude --description "Trigger Claude to work on this issue"
+```
+
+### 4. Apply the Label to Trigger Claude
+
+```bash
+gh issue edit <issue-number> --add-label claude
+```
+
+This triggers the GitHub Actions workflow. Claude will:
+
+1. Read the issue description
+2. Check out the code
+3. Identify and fix the bug
+4. Push the fix to a new branch (prefixed with `claude/`)
+5. Post a summary comment on the issue with a link to create a PR
+
+### 5. Review Claude's Work
+
+Claude posted this fix on [Issue #5](https://github.com/BrendanJamesLynskey/claude-review-demo/issues/5):
+
+```python
+def paginate(items, page, page_size):
+    start = (page - 1) * page_size   # Fixed: subtract 1 for 1-indexed pages
+    end = start + page_size
+    return items[start:end]
+```
+
+The fix changes `page * page_size` to `(page - 1) * page_size`, so page 1 now correctly maps to index 0.
+
+### 6. Create and Merge the PR
+
+Claude provides a "Create PR" link in its comment. Click it, or create the PR manually:
+
+```bash
+gh pr create --base master --head claude/issue-5-20260413-0840 \
+  --title "fix: correct paginate() off-by-one error" \
+  --body "Closes #5"
+```
+
+Review the PR ([PR #6](https://github.com/BrendanJamesLynskey/claude-review-demo/pull/6)), and merge it once satisfied.
+
 ## Customising Claude's Behaviour with CLAUDE.md
 
 Add a `CLAUDE.md` file to your repository root to guide Claude's focus:
