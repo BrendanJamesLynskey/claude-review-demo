@@ -1,6 +1,22 @@
 """Utility functions for data processing."""
 
 
+def paginate(items, page, page_size):
+    """Return a page of items from a list.
+
+    Args:
+        items: The full list of items.
+        page: The 1-indexed page number (page 1 is the first page).
+        page_size: The number of items per page.
+
+    Returns:
+        A slice of items for the requested page.
+    """
+    start = (page - 1) * page_size
+    end = start + page_size
+    return items[start:end]
+
+
 def calculate_average(numbers):
     """Return the average of a list of numbers."""
     total = 0
